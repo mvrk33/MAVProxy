@@ -11,6 +11,7 @@ This ground station was developed as part of the CanberraUAV OBC team
 entry
 
 Installation instructions
+-------
 
 `git clone https://github.com/jogendarkumar/MAVProxy `
 
