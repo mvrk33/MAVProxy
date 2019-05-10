@@ -10,6 +10,14 @@ Please see http://ardupilot.github.io/MAVProxy/ for more information
 This ground station was developed as part of the CanberraUAV OBC team
 entry
 
+Installation instructions
+-------
+`git clone https://github.com/jogendarkumar/MAVProxy`
+`cd MAVProxy`
+`python setup.py build install --user`
+`cd MAVProxy` 
+`python mavproxy.py`
+
 License
 -------
 
