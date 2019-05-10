@@ -13,10 +13,14 @@ entry
 Installation instructions
 
 `git clone https://github.com/jogendarkumar/MAVProxy `
-cd MAVProxy
-python setup.py build install --user
-cd MAVProxy
-python mavproxy.py
+
+`cd MAVProxy`
+
+`python setup.py build install --user`
+
+`cd MAVProxy`
+
+`python mavproxy.py`
 
 License
 -------
