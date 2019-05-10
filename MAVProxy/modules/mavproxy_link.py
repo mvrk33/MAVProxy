@@ -582,7 +582,7 @@ class LinkModule(mp_module.MPModule):
             if(curr_lat != prev_lat or curr_lon!= prev_long):
                 prev_lat  = curr_lat
                 prev_long = curr_lon
-                __builtin__.print("lat :"+ str(curr_lat)+ ",long :"+ str(curr_lon))
+                print("{\"lat\":"+ str(curr_lat)+ ",\"long\" :"+ str(curr_lon)+"}")
             # send GLOBAL_POSITION_INT to 2nd GCS for 2nd vehicle display
             for sysid in self.mpstate.sysid_outputs:
                 self.mpstate.sysid_outputs[sysid].write(m.get_msgbuf())
