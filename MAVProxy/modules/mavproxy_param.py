@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+from __future__ import print_function
+try:
+	import __builtin__
+except ImportError:
+	import builtins as __builtin__
+import aws_iot
+def print(*args, **kwargs):
+	aws_iot.printToAWSconsole(*args)
+	return __builtin__.print(*args, **kwargs)
+'''AWS iot publish '''
+
 '''param command handling'''
 
 import time, os, fnmatch, time, struct

@@ -1,4 +1,17 @@
 #!/usr/bin/env python
+from __future__ import print_function
+try:
+	import __builtin__
+except ImportError:
+	import builtins as __builtin__
+import aws_iot
+def print(*args, **kwargs):
+	aws_iot.printToAWSconsole(*args)
+	return __builtin__.print(*args, **kwargs)
+def awsprint(*args, **kwargs):
+    aws_iot.printToAWSconsole(*args)
+'''AWS iot publish '''
+
 '''enable run-time addition and removal of master link, just like --master on the cnd line'''
 ''' TO USE:
     link add 10.11.12.13:14550
@@ -33,6 +46,8 @@ preferred_ports = [
     '*mRo*',
     '*FMU*']
 
+prev_lat = 0.0 
+prev_long = 0.0
 class LinkModule(mp_module.MPModule):
 
     def __init__(self, mpstate):
@@ -456,6 +471,7 @@ class LinkModule(mp_module.MPModule):
             if m.text != self.status.last_apm_msg or time.time() > self.status.last_apm_msg_time+2:
                 (fg, bg) = self.colors_for_severity(m.severity)
                 self.mpstate.console.writeln("APM: %s" % mp_util.null_term(m.text), bg=bg, fg=fg)
+                awsprint("APM: %s" % mp_util.null_term(m.text), bg=bg, fg=fg)
                 self.status.last_apm_msg = m.text
                 self.status.last_apm_msg_time = time.time()
 
@@ -516,7 +532,7 @@ class LinkModule(mp_module.MPModule):
 
         elif mtype in [ "COMMAND_ACK", "MISSION_ACK" ]:
             self.mpstate.console.writeln("Got MAVLink msg: %s" % m)
-
+            awsprint("Got MAVLink msg: %s" % m)
             if mtype == "COMMAND_ACK" and m.command == mavutil.mavlink.MAV_CMD_PREFLIGHT_CALIBRATION:
                 if m.result == mavutil.mavlink.MAV_RESULT_ACCEPTED:
                     self.say("Calibrated")
@@ -542,7 +558,6 @@ class LinkModule(mp_module.MPModule):
 
     def master_callback(self, m, master):
         '''process mavlink message m on master, sending any messages to recipients'''
-
         # see if it is handled by a specialised sysid connection
         sysid = m.get_srcSystem()
         mtype = m.get_type()
@@ -560,6 +575,14 @@ class LinkModule(mp_module.MPModule):
         self.status.counters['MasterIn'][master.linknum] += 1
 
         if mtype == 'GLOBAL_POSITION_INT':
+            global prev_long
+            global prev_lat
+            curr_lat  = m.lat * 1e-7
+            curr_lon  = m.lon * 1e-7
+            if(curr_lat != prev_lat or curr_lon!= prev_long):
+                prev_lat  = curr_lat
+                prev_long = curr_lon
+                __builtin__.print("lat :"+ str(curr_lat)+ ",long :"+ str(curr_lon))
             # send GLOBAL_POSITION_INT to 2nd GCS for 2nd vehicle display
             for sysid in self.mpstate.sysid_outputs:
                 self.mpstate.sysid_outputs[sysid].write(m.get_msgbuf())

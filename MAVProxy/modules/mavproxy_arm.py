@@ -1,10 +1,19 @@
-#!/usr/bin/env python
-'''arm/disarm command handling'''
+from __future__ import print_function
+try:
+	import __builtin__
+except ImportError:
+	import builtins as __builtin__
+import aws_iot
+def print(*args, **kwargs):
+	aws_iot.printToAWSconsole(*args)
+	return __builtin__.print(*args, **kwargs)
+'''AWS iot publish '''
 
 import time, os
 
 from MAVProxy.modules.lib import mp_module
 from pymavlink import mavutil
+
 
 arming_masks = {
     "all"     : 0x0001,
@@ -41,7 +50,6 @@ class ArmModule(mp_module.MPModule):
     def cmd_arm(self, args):
         '''arm commands'''
         usage = "usage: arm <check|uncheck|list|throttle|safetyon|safetyoff>"
-
         if len(args) <= 0:
             print(usage)
             return

@@ -1,3 +1,17 @@
+#!/usr/bin/env python
+from __future__ import print_function
+try:
+	import __builtin__
+except ImportError:
+	import builtins as __builtin__
+from .. import aws_iot
+def print(*args, **kwargs):
+	aws_iot.printToAWSconsole(*args)
+	return __builtin__.print(*args, **kwargs)
+def awsprint(*args, **kwargs):
+    aws_iot.printToAWSconsole(*args)
+'''AWS iot publish '''
+
 import time
 
 class MPModule(object):
@@ -131,6 +145,7 @@ class MPModule(object):
         return self.mpstate.status.logdir
 
     def say(self, msg, priority='important'):
+        awsprint(msg)
         return self.mpstate.functions.say(msg)
 
     def get_mav_param(self, param_name, default=None):
