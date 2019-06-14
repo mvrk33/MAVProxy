@@ -126,6 +126,48 @@ class MPStatus(object):
 			if pattern is not None and not fnmatch.fnmatch(str(m).upper(), pattern.upper()):
 				continue
 			f.write("%u: %s\n" % (self.msg_count[m], str(self.msgs[m])))
+	def raw_imu(self):
+	    data=str(self.msgs.get('RAW_IMU'))
+	    return data
+	def distance_sensor(self):
+	    data=str(self.msgs.get('DISTANCE_SENSOR'))
+	    return data
+	def int_gps(self):
+	    data=str(self.msgs.get('GLOBAL_POSITION_INT'))
+	    return data
+	def raw_gps(self):
+	    data=str(self.msgs.get('GPS_RAW_INT'))
+	    return data
+	def attitude(self):
+	    data=str(self.msgs.get('ATTITUDE'))
+	    return data
+	def power_status(self):
+	    data=str(self.msgs.get('POWER_STATUS'))
+	    return data
+	def range_finder(self):
+	    data=str(self.msgs.get('RANGEFINDER'))
+	    return data
+	def scaled_imu2(self):
+	    data=str(self.msgs.get('SCALED_IMU2'))
+	    return data
+	def scaled_pressure(self):
+	    data=str(self.msgs.get('SCALED_PRESSURE'))
+	    return data
+	def scaled_pressure2(self):
+	    data=str(self.msgs.get('SCALED_PRESSURE2'))
+	    return data
+	def raw_servo(self):
+	    data=str(self.msgs.get('SERVO_OUTPUT_RAW'))
+	    return data
+	def sys_status(self):
+	    data=str(self.msgs.get('SYS_STATUS'))
+	    return data
+	def vfr_hud(self):
+	    data=str(self.msgs.get('VFR_HUD'))
+	    return data
+	def vibration(self):
+	    data=str(self.msgs.get('VIBRATION'))
+	    return data
 
 	def write(self):
 		'''write status to status.txt'''
@@ -1259,6 +1301,29 @@ if __name__ == '__main__':
 	mpstate.status.thread = threading.Thread(target=main_loop, name='main_loop')
 	mpstate.status.thread.daemon = True
 	mpstate.status.thread.start()
+	
+    #$%$%$%$%$%$%$%$%$%$%$%$%$%$%$D%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%5
+    #                          Data from Pixhawk
+    #$%$%$%$%$%$%$%$%$%$%$%$%$%$%$D%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%5
+	
+	
+	time.sleep(3)
+	#_______________________individual unprocessed data_______________________
+    
+    #print mpstate.status.raw_imu() if mpstate.status.raw_imu() else ''
+    #print mpstate.status.raw_gps() if mpstate.status.raw_gps() else ''
+    #print mpstate.status.distance_sensor() if mpstate.status.distance_sensor() else ''
+    
+    #__________________________Processed data_________________________________   
+    
+	while 1:
+	    if mpstate.status.scaled_imu2() :
+		data=mpstate.status.scaled_imu2()[:-1]
+	    data=data.split(',')
+	    time.sleep(.2)
+	    print (str(data[1:]))
+
+	
 
 	# use main program for input. This ensures the terminal cleans
 	# up on exit
@@ -1298,3 +1363,4 @@ if __name__ == '__main__':
 			m.unload()
 
 	sys.exit(1)
+
