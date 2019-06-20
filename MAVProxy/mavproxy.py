@@ -43,6 +43,8 @@ import select
 import shlex
 import platform
 import json
+import math
+import datetime
 
 from imp import reload
 
@@ -126,6 +128,49 @@ class MPStatus(object):
 			if pattern is not None and not fnmatch.fnmatch(str(m).upper(), pattern.upper()):
 				continue
 			f.write("%u: %s\n" % (self.msg_count[m], str(self.msgs[m])))
+	def raw_imu(self):
+	    data=str(self.msgs.get('RAW_IMU'))
+	    return data
+	def distance_sensor(self):
+	    
+	    data=str(self.msgs.get('DISTANCE_SENSOR'))
+	    return data
+	def int_gps(self):
+	    data=str(self.msgs.get('GLOBAL_POSITION_INT'))
+	    return data
+	def raw_gps(self):
+	    data=str(self.msgs.get('GPS_RAW_INT'))
+	    return data
+	def attitude(self):
+	    data=str(self.msgs.get('ATTITUDE'))
+	    return data
+	def power_status(self):
+	    data=str(self.msgs.get('POWER_STATUS'))
+	    return data
+	def range_finder(self):
+	    data=str(self.msgs.get('RANGEFINDER'))
+	    return data
+	def scaled_imu2(self):
+	    data=str(self.msgs.get('SCALED_IMU2'))
+	    return data
+	def scaled_pressure(self):
+	    data=str(self.msgs.get('SCALED_PRESSURE'))
+	    return data
+	def scaled_pressure2(self):
+	    data=str(self.msgs.get('SCALED_PRESSURE2'))
+	    return data
+	def raw_servo(self):
+	    data=str(self.msgs.get('SERVO_OUTPUT_RAW'))
+	    return data
+	def sys_status(self):
+	    data=str(self.msgs.get('SYS_STATUS'))
+	    return data
+	def vfr_hud(self):
+	    data=str(self.msgs.get('VFR_HUD'))
+	    return data
+	def vibration(self):
+	    data=str(self.msgs.get('VIBRATION'))
+	    return data
 
 	def write(self):
 		'''write status to status.txt'''
@@ -1259,6 +1304,250 @@ if __name__ == '__main__':
 	mpstate.status.thread = threading.Thread(target=main_loop, name='main_loop')
 	mpstate.status.thread.daemon = True
 	mpstate.status.thread.start()
+	
+    #$%$%$%$%$%$%$%$%$%$%$%$%$%$%$D%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%5
+    #                          Data from Pixhawk
+    #$%$%$%$%$%$%$%$%$%$%$%$%$%$%$D%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%$%5
+	
+	
+	time.sleep(5)
+	#_______________________individual unprocessed data_______________________
+    
+    #print mpstate.status.raw_imu() if mpstate.status.raw_imu() else ''
+    #print mpstate.status.raw_gps() if mpstate.status.raw_gps() else ''
+    #print mpstate.status.distance_sensor() if mpstate.status.distance_sensor() else ''
+    
+    #__________________________Processed data_________________________________   
+    
+	'''while 1:
+	    if mpstate.status.raw_imu() :
+		data=mpstate.status.raw_imu()[:-1]
+	    data=data.split(',')
+	    time.sleep(.2)
+	    print (str(data[1:]))
+	    
+	'''
+	
+	RAD_TO_DEG = 57.29578
+	M_PI = 3.14159265358979323846
+	G_GAIN = 0.070  # [deg/s/LSB]  If you change the dps for gyro, you need to update this value accordingly
+	AA =  0.40      # Complementary filter constant
+
+	################# Compass Calibration values ############
+
+	magXmin =  0
+	magYmin =  0
+	magZmin =  0
+	magXmax =  0
+	magYmax =  0
+	magZmax =  0
+
+
+	gyroXangle = 0.0
+	gyroYangle = 0.0
+	gyroZangle = 0.0
+	CFangleX = 0.0
+	CFangleY = 0.0
+
+
+	a = datetime.datetime.now()
+
+	while True:
+	    #Read the accelerometer,gyroscope and magnetometer values
+	    if mpstate.status.raw_imu() :
+		data=mpstate.status.raw_imu()[:-1]
+		data=data.split(',')
+	    
+	    
+	    ACCx = float(data[1].split(':')[1])
+	    ACCy = float(data[2].split(':')[1])
+	    ACCz = float(data[3].split(':')[1])
+	    GYRx = float(data[4].split(':')[1])
+	    GYRy = float(data[5].split(':')[1])
+	    GYRz = float(data[6].split(':')[1])
+	    MAGx = float(data[7].split(':')[1])
+	    MAGy = float(data[8].split(':')[1])
+	    MAGz = float(data[9].split(':')[1])
+
+
+	    #Apply compass calibration    
+	    MAGx -= (magXmin + magXmax) /2 
+	    MAGy -= (magYmin + magYmax) /2 
+	    MAGz -= (magZmin + magZmax) /2 
+
+	    ##Calculate loop Period(LP). How long between Gyro Reads
+	    b = datetime.datetime.now() - a
+	    a = datetime.datetime.now()
+	    LP = b.microseconds/(1000000*1.0)
+	    #print ("Loop Time | %5.2f|" % ( LP ))
+
+
+	    #Convert Gyro raw to degrees per second
+	    rate_gyr_x =  GYRx * G_GAIN
+	    rate_gyr_y =  GYRy * G_GAIN
+	    rate_gyr_z =  GYRz * G_GAIN
+
+
+	    #Calculate the angles from the gyro. 
+	    gyroXangle+=rate_gyr_x*LP
+	    gyroYangle+=rate_gyr_y*LP
+	    gyroZangle+=rate_gyr_z*LP
+
+
+	    #Convert Accelerometer values to degrees
+	    AccXangle =  (math.atan2(ACCy,ACCz)*RAD_TO_DEG)
+	    AccYangle =  (math.atan2(ACCz,ACCx)+M_PI)*RAD_TO_DEG
+
+	    #convert the values to -180 and +180
+	    if AccYangle > 90:
+		AccYangle -= 270.0
+	    else:
+		AccYangle += 90.0
+
+
+
+	    #Complementary filter used to combine the accelerometer and gyro values.
+	    CFangleX=AA*(CFangleX+rate_gyr_x*LP) +(1 - AA) * AccXangle
+	    CFangleY=AA*(CFangleY+rate_gyr_y*LP) +(1 - AA) * AccYangle
+
+
+
+	    #Calculate heading
+	    heading = 180 * math.atan2(MAGy,MAGx)/M_PI
+	    
+	    #Only have our heading between 0 and 360
+	    if heading < 0:
+		heading += 360
+	    #print(str(heading))
+	    from scipy.interpolate import interp1d
+	    m = interp1d([0,360],[360,0])
+	    heading=int(m(heading))
+	    #Normalize accelerometer raw values.
+	    accXnorm = ACCx/math.sqrt(ACCx * ACCx + ACCy * ACCy + ACCz * ACCz)
+	    accYnorm = ACCy/math.sqrt(ACCx * ACCx + ACCy * ACCy + ACCz * ACCz)
+
+
+	    #Calculate pitch and roll
+	    pitch = math.asin(accXnorm)
+	    roll = -math.asin(accYnorm/math.cos(pitch))
+
+	    #Calculate the new tilt compensated values
+	    magXcomp = MAGx*math.cos(pitch)+MAGz*math.sin(pitch)
+	   
+	    magYcomp = MAGx*math.sin(roll)*math.sin(pitch)+MAGy*math.cos(roll)+MAGz*math.sin(roll)*math.cos(pitch)   
+
+	    #Calculate tilt compensated heading
+	    tiltCompensatedHeading = 180 * math.atan2(magYcomp,magXcomp)/M_PI
+
+	    if tiltCompensatedHeading < 0:
+		tiltCompensatedHeading += 360
+	    
+	    tiltCompensatedHeading=int(m(tiltCompensatedHeading))
+ 		
+	    print (heading)
+
+	    time.sleep(0.03)
+	    
+	
+	'''print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Arming & DisArming $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4")
+	def send_arm(master):
+	    master.mav.command_long_send(
+	    1, # conn system id
+	    1, # conn component id
+	    400, # command id, ARM/DISARM
+	    0, # confirmation
+	    1, # arm!
+	    0,0,0,0,0,0 # unused parameters for this command
+	    )
+
+	    time.sleep(2)
+
+	    master.mav.command_long_send(
+	    1, # conn system id
+	    1, # conn component id
+	    400, # command id, ARM/DISARM
+	    0, # confirmation
+	    0, # disarm!
+	    0,0,0,0,0,0 # unused parameters for this command
+	    )
+	    
+	for master in mpstate.mav_master:    
+	    send_arm(master)
+	    master.mav.param_set_send(
+	    1,
+	    1,
+	    "RNGFND_TYPE",
+	    10, # "MAVLink"
+	    mavutil.mavlink.MAV_PARAM_TYPE_INT8)
+	    
+	min = 10 # minimum valid measurement that the autopilot should use
+	max = 20000 # maximum valid measurement that the autopilot should use
+
+	distance = 2000 # You will need to supply the distance measurement
+	type = mavutil.mavlink.MAV_DISTANCE_SENSOR_UNKNOWN
+	id = 1
+	orientation = 0
+	covariance = 0
+
+	tstart = time.time()
+
+	    
+	def send_distance_message(master,orientation,distance):
+	    master.mav.distance_sensor_send(
+		(time.time() - tstart) * 1000,
+		min,
+		max,
+		distance,
+		type,
+		id,
+		orientation,
+		covariance)
+	    master.mav.gps_input_send(
+	    0,          #Timestamp (micros since boot or Unix epoch)
+	    0,          #ID of the GPS for multiple GPS inputs
+	    8|16|32,    #Flags indicating which fields to ignore (see GPS_INPUT_IGNORE_FLAGS enum). All other fields must be provided.
+	    0,          #GPS time (milliseconds from start of GPS week)
+	    0,          #GPS week number
+	    3,          #0-1: no fix, 2: 2D fix, 3: 3D fix. 4: 3D with DGPS. 5: 3D with RTK
+	    16E7,          #Latitude (WGS84), in degrees * 1E7
+	    89E7,          #Longitude (WGS84), in degrees * 1E7
+	    0,          #Altitude (AMSL, not WGS84), in m (positive for up)
+	    1,          #GPS HDOP horizontal dilution of position in m
+	    1,          #GPS VDOP vertical dilution of position in m
+	    0,          #GPS velocity in m/s in NORTH direction in earth-fixed NED frame
+	    0,          #GPS velocity in m/s in EAST direction in earth-fixed NED frame
+	    0,          #GPS velocity in m/s in DOWN direction in earth-fixed NED frame
+	    0,          #GPS speed accuracy in m/s
+	    0,          #GPS horizontal accuracy in m
+	    0,          #GPS vertical accuracy in m
+	    23           #Number of satellites visible.
+	    )
+	    
+
+	while True:
+	    for master in mpstate.mav_master:
+			   
+			    
+			    time.sleep(.2)
+			    if distance<300:
+				distance=distance-1;
+			    if distance>=300:
+				distance=distance-10;
+			    send_distance_message(master,0,distance)
+			    send_distance_message(master,1,distance)
+			    send_distance_message(master,2,distance)
+			    send_distance_message(master,3,distance)
+			    send_distance_message(master,4,distance)
+			    send_distance_message(master,5,distance)
+			    send_distance_message(master,6,distance)
+			    send_distance_message(master,7,distance)
+			    #print('distance'+str(distance))
+			    
+			    if distance<1:
+				
+				distance=2000
+	'''	
+	    	
 
 	# use main program for input. This ensures the terminal cleans
 	# up on exit
