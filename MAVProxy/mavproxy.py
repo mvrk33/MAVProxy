@@ -1444,7 +1444,7 @@ if __name__ == '__main__':
 	    
 	    tiltCompensatedHeading=int(m(tiltCompensatedHeading))
  		
-	    print (heading)
+	    print ('{"heading_compass_reading":'+str(heading)+'}')
 
 	    time.sleep(0.03)
 	    
